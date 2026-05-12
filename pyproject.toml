@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "depthpillar"
+version = "0.1.0"
+description = "Real-time PointPillars LiDAR 3D object detection on KITTI with a C++ inference path"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "torch>=2.0",
+    "numpy>=1.23",
+    "pyyaml>=6.0",
+    "tqdm>=4.64",
+    "tensorboard>=2.12",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+onnx = ["onnx>=1.14"]
+
+[tool.setuptools.packages.find]
+include = ["depthpillar*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
