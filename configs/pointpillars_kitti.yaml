@@ -1,0 +1,73 @@
+# PointPillars on KITTI (Car / Pedestrian / Cyclist), LiDAR-only.
+data:
+  root: data/kitti                # contains training/{velodyne,label_2,calib} and ImageSets/
+  classes: [Car, Pedestrian, Cyclist]
+  point_cloud_range: [0.0, -39.68, -3.0, 69.12, 39.68, 1.0]
+  fov_filter: true                # keep only points visible in the left color camera
+  num_point_features: 4           # x, y, z, reflectance
+  gt_database: data/kitti/gt_database
+  gt_sampling:
+    enabled: true
+    samples_per_class: {Car: 15, Pedestrian: 10, Cyclist: 10}
+    min_points: {Car: 5, Pedestrian: 5, Cyclist: 5}
+    filter_difficulty: [-1]
+  augment:
+    global_rotation: [-0.78539816, 0.78539816]
+    global_scaling: [0.95, 1.05]
+    flip_y: true
+    object_noise:
+      enabled: true
+      translation_std: [0.25, 0.25, 0.25]
+      rotation_range: [-0.15707963, 0.15707963]
+      num_tries: 100
+
+voxel:
+  voxel_size: [0.16, 0.16, 4.0]
+  max_points_per_voxel: 32
+  max_voxels_train: 16000
+  max_voxels_eval: 40000
+
+model:
+  pillar_feature_channels: 64
+  backbone:
+    layer_nums: [3, 5, 5]
+    layer_strides: [2, 2, 2]
+    num_filters: [64, 128, 256]
+    upsample_strides: [1, 2, 4]
+    num_upsample_filters: [128, 128, 128]
+  head:
+    use_direction_classifier: true
+    num_dir_bins: 2
+    dir_offset: 0.78539816
+  anchors:
+    # One entry per class; sizes are [l, w, h] in metres, z is the anchor centre height.
+    - {class: Car,        size: [3.9, 1.6, 1.56],  z: -1.78, rotations: [0.0, 1.57079632], matched: 0.6, unmatched: 0.45}
+    - {class: Pedestrian, size: [0.8, 0.6, 1.73],  z: -0.6,  rotations: [0.0, 1.57079632], matched: 0.5, unmatched: 0.35}
+    - {class: Cyclist,    size: [1.76, 0.6, 1.73], z: -0.6,  rotations: [0.0, 1.57079632], matched: 0.5, unmatched: 0.35}
+
+loss:
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+  cls_weight: 1.0
+  box_weight: 2.0
+  dir_weight: 0.2
+  code_weights: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+train:
+  epochs: 80
+  batch_size: 4
+  num_workers: 4
+  lr: 0.003
+  weight_decay: 0.01
+  pct_start: 0.4
+  grad_clip: 10.0
+  amp: true
+  freeze_backbone_epochs: 0       # >0 when fine-tuning from a pretrained checkpoint
+  eval_interval: 5
+  output_dir: runs/pointpillars_kitti
+
+postprocess:
+  score_threshold: 0.1
+  nms_iou_threshold: 0.01
+  nms_pre_max: 4096
+  nms_post_max: 50
