@@ -10,7 +10,8 @@ fine-tuned for cars, pedestrians and cyclists, plus a C++ inference pipeline
 - **Pillar voxelization** is implemented twice with identical semantics: a vectorized
   NumPy/PyTorch version for training and a C++ version for deployment. The network that is
   exported to TorchScript takes the *already-voxelized* tensors
-  (`pillars [P, N, 9]`, `num_points [P]`, `coords [P, 3]`) so the C++ side owns preprocessing.
+  (`voxels [P, N, 4]` raw points, `num_points [P]`, `coords [P, 4]`) so the C++ side owns
+  voxelization; the 9-dim point decoration lives inside the network so it cannot drift.
 - **Config** is a single YAML file (`configs/pointpillars_kitti.yaml`) loaded into dataclasses;
   the C++ pipeline reads the same values from a small exported `deploy.json`.
 - **Fine-tuning**: training can start from a pretrained checkpoint (`--pretrained`), with
