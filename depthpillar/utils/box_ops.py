@@ -43,8 +43,8 @@ def boxes_to_corners_3d(boxes: np.ndarray) -> np.ndarray:
     """LiDAR boxes [N, 7] -> corners [N, 8, 3]. First four corners are the bottom face."""
     template = np.array(
         [
-            [1, 1, -1], [1, -1, -1], [-1, -1, -1], [-1, 1, -1],
-            [1, 1, 1], [1, -1, 1], [-1, -1, 1], [-1, 1, 1],
+            [1, -1, -1], [1, 1, -1], [-1, 1, -1], [-1, -1, -1],
+            [1, -1, 1], [1, 1, 1], [-1, 1, 1], [-1, -1, 1],
         ],
         dtype=np.float64,
     ) / 2.0
