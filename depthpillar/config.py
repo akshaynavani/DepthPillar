@@ -1,7 +1,7 @@
 """Typed configuration loaded from YAML."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field, fields, is_dataclass
+from dataclasses import MISSING, dataclass, field, fields, is_dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -142,6 +142,7 @@ class Config:
 
 
 def _build(cls, raw: Any):
+    """Recursively construct a dataclass from a nested dict, ignoring unknown keys."""
     if not is_dataclass(cls) or not isinstance(raw, dict):
         return raw
     kwargs = {}
@@ -149,14 +150,10 @@ def _build(cls, raw: Any):
         if f.name not in raw:
             continue
         value = raw[f.name]
-        sub = f.type if isinstance(f.type, type) else None
-        default = cls.__dataclass_fields__[f.name]
-        if default.default_factory is not field().default_factory:  # type: ignore[attr-defined]
-            probe = default.default_factory()  # type: ignore[misc]
+        if f.default_factory is not MISSING:
+            probe = f.default_factory()
             if is_dataclass(probe):
                 value = _build(type(probe), value)
-        elif sub is not None and is_dataclass(sub):
-            value = _build(sub, value)
         kwargs[f.name] = value
     return cls(**kwargs)
 
