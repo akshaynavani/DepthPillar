@@ -108,3 +108,28 @@ def boxes3d_to_image_bbox(boxes_lidar: np.ndarray, calib: Calibration, image_sha
         bbox[:, [0, 2]] = np.clip(bbox[:, [0, 2]], 0, w - 1)
         bbox[:, [1, 3]] = np.clip(bbox[:, [1, 3]], 0, h - 1)
     return bbox.astype(np.float32)
+
+
+def _polygon_axes(poly: np.ndarray) -> np.ndarray:
+    edges = np.roll(poly, -1, axis=0) - poly
+    normals = np.stack([-edges[:, 1], edges[:, 0]], axis=1)
+    return normals / np.linalg.norm(normals, axis=1, keepdims=True).clip(1e-9)
+
+
+def bev_boxes_overlap(boxes_a: np.ndarray, boxes_b: np.ndarray) -> np.ndarray:
+    """Rotated BEV collision test (separating axis theorem). Returns bool [Na, Nb]."""
+    out = np.zeros((boxes_a.shape[0], boxes_b.shape[0]), dtype=bool)
+    if out.size == 0:
+        return out
+    ca, cb = boxes_to_bev_corners(boxes_a), boxes_to_bev_corners(boxes_b)
+    # cheap circle pre-check
+    ra = np.linalg.norm(boxes_a[:, 3:5], axis=1) / 2.0
+    rb = np.linalg.norm(boxes_b[:, 3:5], axis=1) / 2.0
+    dist = np.linalg.norm(boxes_a[:, None, :2] - boxes_b[None, :, :2], axis=-1)
+    candidates = np.argwhere(dist < ra[:, None] + rb[None, :])
+    for i, j in candidates:
+        axes = np.concatenate([_polygon_axes(ca[i]), _polygon_axes(cb[j])], axis=0)
+        pa, pb = ca[i] @ axes.T, cb[j] @ axes.T
+        separated = (pa.max(0) < pb.min(0)) | (pb.max(0) < pa.min(0))
+        out[i, j] = not separated.any()
+    return out

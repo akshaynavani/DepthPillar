@@ -101,7 +101,6 @@ class KittiDataset(Dataset):
         training: bool = True,
         augmentor=None,
         voxelizer=None,
-        target_assigner=None,
     ):
         self.cfg = cfg
         self.root = Path(cfg.data.root)
@@ -111,7 +110,6 @@ class KittiDataset(Dataset):
         self.class_names = list(cfg.data.classes)
         self.augmentor = augmentor
         self.voxelizer = voxelizer
-        self.target_assigner = target_assigner
         split_file = self.root / "ImageSets" / f"{split}.txt"
         if not split_file.exists():
             raise FileNotFoundError(f"missing split file {split_file}")
@@ -189,6 +187,4 @@ class KittiDataset(Dataset):
 
         if self.voxelizer is not None:
             sample.update(self.voxelizer(sample["points"]))
-        if self.training and self.target_assigner is not None:
-            sample.update(self.target_assigner.assign_numpy(sample["gt_boxes"], sample["gt_labels"]))
         return sample
