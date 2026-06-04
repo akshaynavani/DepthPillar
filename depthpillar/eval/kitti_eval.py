@@ -146,18 +146,18 @@ def average_precision(
     if thresholds.size == 0:
         return 0.0
     prec = np.zeros(len(thresholds))
+    rec = np.zeros(len(thresholds))
     for t, thr in enumerate(thresholds):
         tp = fp = fn = 0
         for ov, sc, ig_gt, ig_dt in per_frame:
             a, b, c, _ = _match(ov, sc, ig_gt, ig_dt, min_ov, thr, compute_fp=True)
             tp, fp, fn = tp + a, fp + b, fn + c
         prec[t] = tp / max(tp + fp, 1)
-    # interpolate: precision at recall r is the max precision at any recall >= r
-    for t in range(len(prec)):
-        prec[t] = prec[t:].max()
-    padded = np.zeros(NUM_SAMPLE_PTS)
-    padded[: len(prec)] = prec
-    return float(padded[1:].sum() / (NUM_SAMPLE_PTS - 1) * 100.0)
+        rec[t] = tp / max(tp + fn, 1)
+    # R40: precision at recall r is the max precision over operating points with recall >= r
+    recall_points = np.linspace(1.0 / (NUM_SAMPLE_PTS - 1), 1.0, NUM_SAMPLE_PTS - 1)
+    interp = np.array([prec[rec >= r - 1e-9].max() if np.any(rec >= r - 1e-9) else 0.0 for r in recall_points])
+    return float(interp.mean() * 100.0)
 
 
 def kitti_evaluate(gts: List[FrameGT], dets: List[FrameDet], classes: Sequence[str]) -> Dict[str, float]:
