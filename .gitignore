@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Data, weights and run outputs
+data/
+runs/
+results/
+deploy/
+weights/
+*.pth
+*.pt
+*.ts
+*.onnx
+
+# C++ build
+cpp/build/
+cmake-build-*/
+compile_commands.json
+
+# Environment / editors
+.env
+.vscode/
+.idea/
+.DS_Store
